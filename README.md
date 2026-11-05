@@ -100,7 +100,7 @@ Playwright config includes desktop Chrome and an iPad touch viewport using Chrom
 - No ranked service, public friend directory, persistent match history or verified global leaderboard. Nicknames are not unique accounts. Every weapon is available immediately for testing; rarity upgrades are looted. Touch placement has two position presets rather than arbitrary drag layout. Palette settings primarily affect HUD contrast.
 - Up to 16 human players are architected, with bots to 40 in the main mode, but full-capacity P2P performance is not verified. Host bandwidth/CPU, device thermals and NAT constrain practical parties. No 60 FPS guarantee on hardware not measured.
 - Anonymous sign-in is currently unavailable as described above. Deployed two-player networking, disconnect/rejoin and friend spectating cannot be verified until it is enabled.
-- The provided cloud browser disables WebGL2; its manual browser checks use the software renderer. Browser-download availability also constrains local Playwright execution. See `VERIFICATION.md` for actual checks, separate from intended coverage.
+- The provided cloud browser disables WebGL2; its manual browser checks use the software renderer. Local browser downloads were unavailable; the deployed suite passed using the Chrome installed on the GitHub runner. All 24 deployed desktop/iPad-profile Playwright checks and nine simulation tests passed. See `VERIFICATION.md` for coverage and limits.
 
 ## Originality
 
