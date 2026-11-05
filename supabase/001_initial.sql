@@ -1,0 +1,21 @@
+create table public.lobbies(code text primary key check(code ~ '^[A-Z2-9]{6}$'),host_id uuid not null references auth.users(id) on delete cascade,mode text not null default 'ending',map text not null default 'Foundry Reach',status text not null default 'open' check(status in ('open','playing','ended')),max_players int not null default 16 check(max_players between 1 and 16),created_at timestamptz not null default now());
+create index lobbies_created_at_idx on public.lobbies(created_at);
+create index lobbies_host_id_idx on public.lobbies(host_id);
+create table public.profiles(id uuid primary key references auth.users(id) on delete cascade,nickname text not null check(char_length(nickname) between 1 and 18),cores int not null default 0 check(cores>=0),created_at timestamptz not null default now());
+alter table public.lobbies enable row level security;
+alter table public.profiles enable row level security;
+create policy lobby_read on public.lobbies for select to authenticated using ((status in ('open','playing') and created_at>now()-interval '2 hours') or host_id=(select auth.uid()));
+create policy lobby_insert on public.lobbies for insert to authenticated with check(host_id=(select auth.uid()) and created_at<=now() and created_at>now()-interval '1 minute');
+create policy lobby_update on public.lobbies for update to authenticated using(host_id=(select auth.uid())) with check(host_id=(select auth.uid()) and created_at<=now());
+create policy lobby_delete on public.lobbies for delete to authenticated using(host_id=(select auth.uid()));
+create policy profile_read on public.profiles for select to authenticated using(id=(select auth.uid()));
+create policy profile_insert on public.profiles for insert to authenticated with check(id=(select auth.uid()));
+create policy profile_update on public.profiles for update to authenticated using(id=(select auth.uid())) with check(id=(select auth.uid()));
+create policy profile_delete on public.profiles for delete to authenticated using(id=(select auth.uid()));
+grant select,insert,update,delete on public.lobbies,public.profiles to authenticated;
+revoke all on public.lobbies,public.profiles from anon;
+create extension if not exists pg_cron with schema pg_catalog;
+select cron.schedule('cleanup-expired-tfe-lobbies','*/10 * * * *',$$delete from public.lobbies where created_at<now()-interval '2 hours'$$);
+create policy tfe_realtime_read on realtime.messages for select to authenticated using (exists(select 1 from public.lobbies where code=split_part(realtime.topic(),':',2) and created_at>now()-interval '2 hours'));
+create policy tfe_realtime_write on realtime.messages for insert to authenticated with check (exists(select 1 from public.lobbies where code=split_part(realtime.topic(),':',2) and created_at>now()-interval '2 hours'));
+

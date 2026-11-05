@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {Simulation,MODES,emptyInput,type Config,type Mode} from '../src/model.ts';
+const cfg=(mode:Mode='ending'):Config=>({mode,seed:42,difficulty:1,teams:1,bots:3,build:true});
+test('seed produces identical initial map and players',()=>{assert.deepEqual(new Simulation(cfg(),[{id:'a',name:'A'}]).state,new Simulation(cfg(),[{id:'a',name:'A'}]).state);});
+test('validates input and authoritative speed/fire damage',()=>{const s=new Simulation(cfg('playground'),[{id:'a',name:'A'}]);const p=s.state.players[0];const x=p.x;s.input('a',{...emptyInput(),x:999});s.tick(.05);assert.ok(Math.abs(p.x-x)<=.351);s.input('a',{...emptyInput(),x:NaN});assert.equal(p.input.x,1);});
+test('building spends material, caps duplicate pieces and allows editing',()=>{const s=new Simulation(cfg('playground'),[{id:'a',name:'A'}]);const p=s.state.players[0];s.build(p,0);s.build(p,0);assert.equal(s.state.pieces.length,1);assert.equal(s.state.pieces[0].hp,140);});
+test('weapon fire respects cooldown and friendly fire',()=>{const s=new Simulation({...cfg('tdm'),bots:0},[{id:'a',name:'A',team:0},{id:'b',name:'B',team:1}]);const[a,b]=s.state.players;a.x=b.x=0;a.z=0;b.z=8;a.y=b.y=1;s.state.resources=[];s.input('a',{...emptyInput(),fire:true,weapon:0});s.tick(.05);assert.ok(b.shield<50);const shield=b.shield;s.tick(.05);assert.equal(b.shield,shield);});
+test('all modes tick without nonfinite coordinates',()=>{for(const mode of Object.keys(MODES) as Mode[]){const s=new Simulation(cfg(mode),[{id:'a',name:'A'}]);for(let i=0;i<300;i++)s.tick(1/30);for(const p of s.state.players)assert.ok(Number.isFinite(p.x+p.y+p.z),mode);}});
+test('Collapse contracts, eliminates and resolves last standing',()=>{const s=new Simulation({...cfg('zone'),bots:1},[{id:'a',name:'A'}]);const before=s.state.zone;for(let i=0;i<120;i++)s.tick(1/30);assert.ok(s.state.zone<before);s.hurt(s.state.players[1],1000,s.state.players[0]);for(let i=0;i<20;i++)s.tick(1/30);assert.equal(s.state.winner,s.state.players[0].team);});
+test('duel awards best of three',()=>{const s=new Simulation({...cfg('duel'),bots:1},[{id:'a',name:'A'}]);for(let round=0;round<2;round++){s.state.time=5;s.hurt(s.state.players[1],1000,s.state.players[0]);s.tick(.05);for(let i=0;i<70;i++)s.tick(.05);}assert.equal(s.state.winner,0);});

@@ -1,0 +1,24 @@
+{
+  "name": "the-final-ending",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build && node scripts-postbuild.mjs",
+    "preview": "vite preview --host 0.0.0.0",
+    "lint": "tsc --noEmit",
+    "test": "node --import tsx --test tests/simulation.test.ts"
+  },
+  "dependencies": {
+    "three": "^0.180.0",
+    "@supabase/supabase-js": "^2.80.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.180.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.1",
+    "tsx": "^4.20.6",
+    "@playwright/test": "^1.56.1"
+  }
+}
